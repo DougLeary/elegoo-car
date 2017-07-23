@@ -21,7 +21,7 @@ class Proximity
 private:
 	int Echo = A4;
 	int Trig = A5;
-	int direction = 90;
+	int _direction = 90;
 	Servo myservo;
 };
 

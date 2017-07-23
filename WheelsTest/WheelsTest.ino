@@ -1,5 +1,9 @@
 /* Elegoo robot car object avoidance */
 
+#ifndef send
+#define send
+#endif
+
 #include <Wheels.h>
 Wheels car;
 
@@ -11,35 +15,54 @@ Wheels car;
 //int rightDistance = 0;
 //int leftDistance = 0;
 int tooClose = 40;
+int _direction;
+int _servoDelay = 500;
 
 #include <Servo.h> //servo library
 
-Proximity::Proximity(Servo s)
+Servo myservo; // create servo object to control servo
+int Echo = A4;  
+int Trig = A5; 
+int rightDistance = 0, leftDistance = 0, forwardDistance = 0 ;
+
+void setupEyes()
 {
-  myservo = s;
   pinMode(Echo, INPUT);
   pinMode(Trig, OUTPUT);
   myservo.attach(3);  // attach servo on pin 3
-  Serial.begin(9600);
 }
 
-void Proximity::forward() {
-  direction = 90;
-  myservo.write(direction);
+void eyesforward() {
+  if (_direction != 90) {
+    #ifdef send
+    Serial.print("Eyes Forward");
+    #endif
+    _direction = 90;
+    myservo.write(_direction);
+    delay(_servoDelay); 
+  }
 }
 
-void Proximity::left() {
-  direction = 20;
-  myservo.write(direction);
+void eyesleft() {
+  #ifdef send
+  Serial.print("Eyes Left   ");
+  #endif
+  _direction = 180;
+  myservo.write(_direction);
+  delay(_servoDelay); 
 }
 
-void Proximity::right() {
-  direction = 180;
-  myservo.write(direction);
+void eyesright() {
+  #ifdef send
+  Serial.print("Eyes Right  ");
+  #endif
+  _direction = 15;
+  myservo.write(_direction);
+  delay(_servoDelay); 
 }
 
 /* Ultrasonic distance measurement */
-int Proximity::getDistance()
+int getDistance()
 {
   digitalWrite(Trig, LOW);
   delayMicroseconds(2);
@@ -49,20 +72,15 @@ int Proximity::getDistance()
   float Fdistance = pulseIn(Echo, HIGH);
   Fdistance = Fdistance / 58;
 
-  #ifdef send
-    Serial.print("distance at ");
-    Serial.print(direction);
-    Serial.print(" deg: ");
-    Serial.println(Fdistance);
-  #endif
+  if ((_direction != 90) || (Fdistance < tooClose)) {
+    #ifdef send
+      Serial.print(" - distance: ");
+      Serial.println(Fdistance);
+    #endif
+  }
 
   return (int)Fdistance;
 }
-
-Servo myservo; // create servo object to control servo
-int Echo = A4;  
-int Trig = A5; 
-int rightDistance = 0,leftDistance = 0,middleDistance = 0 ;
 
  /*Ultrasonic distance measurement Sub function*/
 int Distance_test()   
@@ -79,11 +97,12 @@ int Distance_test()
 
 void setup() 
 { 
-  Serial.println("*** setup");
-  myservo.attach(3);// attach servo on pin 3 to servo object
-  Serial.begin(9600);     
-  pinMode(Echo, INPUT);    
-  pinMode(Trig, OUTPUT);  
+  Serial.begin(9600);
+  setupEyes();
+//  myservo.attach(3);// attach servo on pin 3 to servo object
+//  Serial.begin(9600);     
+//  pinMode(Echo, INPUT);    
+//  pinMode(Trig, OUTPUT);  
   car.stop();  
 } 
 //void setup() 
@@ -95,71 +114,57 @@ void setup()
 
 void loop() 
 {
-  Serial.println("*** loop");
-    myservo.write(90);//setservo position according to scaled value
-    delay(500); 
-    middleDistance = Distance_test();
-    #ifdef send
-    Serial.print("middleDistance=");
-    Serial.println(middleDistance);
-    #endif
+    eyesforward();
+    forwardDistance = getDistance();
 
 //  forwardDistance = eyes.getDistance();
 //  if (forwardDistance > tooClose)
-  if (middleDistance <= tooClose)
-  {
-    car.forward();
-  }
-  else
+  if (forwardDistance < tooClose)
   {     
     car.stop();
     delay(500);
 
-      delay(500);                         
-      myservo.write(20);          
-      delay(1000);      
-      rightDistance = Distance_test();
-      #ifdef send
-      Serial.print("rightDistance=");
-      Serial.println(rightDistance);
-      #endif
+      eyesleft();          
+      leftDistance = getDistance();
 
-      myservo.write(180);              
-      delay(1000); 
-      leftDistance = Distance_test();
-      #ifdef send
-      Serial.print("leftDistance=");
-      Serial.println(leftDistance);
-      #endif
+      eyesright();              
+      rightDistance = getDistance();
+      Serial.println();
     
 //    eyes.left();
-//    delay(1000);
 //    leftDistance = eyes.getDistance();
 //    eyes.right();
-//    delay(1000);
 //    rightDistance = eyes.getDistance();
     
 //    eyes.forward();
+      eyesforward();
     
     if ((leftDistance < tooClose) || (rightDistance < tooClose))
     {
       // back up and turn around
       car.back();
-      delay(200);
+      delay(500);
       // turn around by turning left twice
       car.left();
+      delay(200);
       car.left();
+      delay(200);
     }
     else if (leftDistance > rightDistance)
     {
       car.left();
-      delay(500);
+      delay(200);
     }
     else if (rightDistance > leftDistance)
     {
       car.right();
-      delay(500);
+      delay(200);
     }
   }
+  else
+  {
+    car.forward();
+  }
+
 }
 

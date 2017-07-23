@@ -12,23 +12,23 @@ Proximity::Proximity(Servo s)
 	myservo = s;
 	pinMode(Echo, INPUT);
 	pinMode(Trig, OUTPUT);
-	//myservo.attach(3);	// attach servo on pin 3
+	myservo.attach(3);	// attach servo on pin 3
 	Serial.begin(9600);
 }
 
 void Proximity::forward() {
-	direction = 90;
-	myservo.write(direction);
+	_direction = 90;
+	myservo.write(_direction);
 }
 
 void Proximity::left() {
-	direction = 20;
-	myservo.write(direction);
+	_direction = 20;
+	myservo.write(_direction);
 }
 
 void Proximity::right() {
-	direction = 180;
-	myservo.write(direction);
+	_direction = 180;
+	myservo.write(_direction);
 }
 
 /* Ultrasonic distance measurement */
@@ -44,7 +44,7 @@ int Proximity::getDistance()
 
 	#ifdef send
 		Serial.print("distance at ");
-		Serial.print(direction);
+		Serial.print(_direction);
 		Serial.print(" deg: ");
 		Serial.println(Fdistance);
 	#endif
